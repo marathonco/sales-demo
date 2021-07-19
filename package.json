@@ -6,7 +6,7 @@
   "author": "AwesomeScott",
   "private": true,
   "scripts": {
-    "build": "quasar build",
+    "build": "quasar build --mode pwa",
     "dev": "quasar dev --mode spa",
     "dev:pwa": "quasar dev --mode pwa",
     "deploy": "quasar build --mode pwa && firebase deploy",
