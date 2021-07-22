@@ -1,13 +1,6 @@
 import { store } from 'quasar/wrappers'
 import { createStore } from 'vuex'
 
-import reservations from './reservations'
-import settings from './settings'
-
-// import cache from '/src/plugins/cache';
-// import sync from '/src/plugins/sync';
-
-// import createPersistedState from "vuex-persistedstate";
 /*
  * If not building with SSR mode, you can
  * directly export the Store instantiation;
@@ -19,13 +12,7 @@ import settings from './settings'
 
 export default store(function (/* { ssrContext } */) {
   const Store = createStore({
-    modules: {
-      reservations,
-      settings
-    },
-    // plugins: [vuexLocal.plugin],
-    // plugins: [createPersistedState()],
-    // plugins: [cache, sync],
+    modules: {},
 
     // enable strict mode (adds overhead!)
     // for dev mode and --debug builds only
