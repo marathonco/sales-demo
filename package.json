@@ -9,7 +9,8 @@
     "build": "quasar build --mode pwa",
     "dev": "quasar dev --mode spa",
     "dev:pwa": "quasar dev --mode pwa",
-    "deploy": "quasar build --mode pwa && firebase deploy",
+    "deploy": "quasar build --mode pwa && firebase deploy --only hosting",
+    "deploy:all": "quasar build --mode pwa && firebase deploy",
     "lint": "eslint --ext .js,.vue ./",
     "test": "echo \"No test specified\" && exit 0"
   },

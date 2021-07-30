@@ -25,12 +25,43 @@
     <div class="row" v-else>
       <h4 class="text-center">No appointments in data</h4>
     </div>
+    <q-card>
+      <h5 class="text-left q-pa-md">Users:</h5>
+      <q-list>
+        <q-item
+          v-for="user in users"
+          :key="user.uid"
+          class="q-my-sm"
+          clickable
+          v-ripple
+        >
+          <q-item-section>
+            <q-item-label>{{ user.email }}</q-item-label>
+          </q-item-section>
+
+          <q-item-section side>
+            <q-btn flat icon="delete" @click="deleteUser()" />
+          </q-item-section>
+        </q-item>
+        <q-item>
+          <q-item-section>
+            <q-input filled label="Email" v-model="newUserEmail">
+              <template v-slot:prepend>
+                <q-icon name="face" />
+              </template>
+            </q-input>
+          </q-item-section>
+
+          <q-item-section side>
+            <q-btn flat icon="add" @click="addUser(newUserEmail)" />
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-card>
   </q-page>
 </template>
 
 <script>
-// TODO: pull data from firestore instead of local...
-
 import { date } from "quasar";
 import { defineComponent, ref, computed, onBeforeMount } from "vue";
 import { db } from "boot/firestore";
@@ -48,13 +79,27 @@ async function getAppointments() {
   return appts;
 }
 
+async function getUsers() {
+  const allUsers = [];
+  await db
+    .collection("users")
+    .get()
+    .then((querySnapshot) => {
+      querySnapshot.docs.forEach((doc) => {
+        allUsers.push({ ...doc.data(), id: doc.id });
+      });
+    });
+  return allUsers;
+}
+
 export default defineComponent({
   name: "Admin",
   setup() {
     let data = ref([]);
+    let users = ref([]);
     onBeforeMount(async () => {
       data.value = await getAppointments();
-      console.log(data);
+      users.value = await getUsers();
     });
     const pastAppointments = ref(false);
     const initialPagination = {
@@ -115,12 +160,6 @@ export default defineComponent({
         sortable: false,
       },
       { name: "delete", label: "", field: "", sortable: false },
-      // {
-      //   name: "time",
-      //   label: "Date & Time",
-      //   field: "datetime",
-      //   sortable: true,
-      // },
     ];
 
     const today = date.formatDate(Date.now(), "YYYY/MM/DD");
@@ -143,27 +182,6 @@ export default defineComponent({
       } else return null;
     });
 
-    // const appointments = computed(() => {
-    //   if ($q.localStorage.getItem("offlineAppointments")) {
-    //     let tmp = [...$q.localStorage.getItem("offlineAppointments")];
-    //     if (pastAppointments.value === false) {
-    //       tmp = tmp.filter((appt) => {
-    //         if (appt.datetime >= today) {
-    //           return appt;
-    //         }
-    //       });
-    //     }
-
-    //     return tmp.sort((a, b) => {
-    //       if (a.time < b.time) return -1;
-    //       else return 1;
-    //     });
-    //   } else return null;
-    // });
-
-    // function clearData() {
-    //   $q.localStorage.remove("offlineAppointments");
-    // }
     const deleteAppointment = (appointment) => {
       db.collection("appointments")
         .doc(appointment.id)
@@ -178,6 +196,56 @@ export default defineComponent({
           console.error("Error removing document: ", error);
         });
     };
+    const newUserEmail = ref(null);
+    const newUserPassword = ref(null);
+    function addUser(email, password) {
+      // store new user in db/newUsers/user.uid
+      // TODO: use cloud functions for this:
+      // EXAMPLE CLOUD FUNCTION
+      // export const createUser = functions.firestore
+      // .document('newUsers/{userId}')
+      // .onCreate(async (snap, context) => {
+      //     const userId = context.params.userId;
+      //     const newUser = await admin.auth().createUser({
+      //         disabled: false,
+      //         displayName: snap.get('displayName'),
+      //         email: snap.get('email'),
+      //         password: snap.get('password'),
+      //         phoneNumber: snap.get('phoneNumber')
+      //     });
+      //     // You can also store the new user in another collection with extra fields
+      //     await admin.firestore().collection('users').doc(newUser.uid).set({
+      //         uid: newUser.uid,
+      //         email: newUser.email,
+      //         name: newUser.displayName,
+      //         phoneNumber: newUser.phoneNumber,
+      //         otherfield: snap.get('otherfield'),
+      //         anotherfield: snap.get('anotherfield')
+      //     });
+      //     // Delete the temp document
+      //     return admin.firestore().collection('newUsers').doc(userId).delete();
+      // });
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          db.collection("users")
+            .doc(user.id)
+            .set({ ...user })
+            .then(() => {
+              console.log(`user created let's move on`);
+            })
+            .catch((error) => {
+              console.log(`oops, there was an error...: ${error}`);
+            });
+        });
+    }
+    function deleteUser(user) {
+      console.log(user);
+      // TODO: will have to use cloud functions for this.
+    }
 
     return {
       pastAppointments,
@@ -185,6 +253,8 @@ export default defineComponent({
       columns,
       appointments,
       deleteAppointment,
+      users,
+      newUserEmail,
     };
   },
 });

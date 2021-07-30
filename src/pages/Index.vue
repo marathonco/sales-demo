@@ -1,15 +1,27 @@
 <template>
   <q-page class="bg-dark">
-    <div class="row flex-center">
-      <img src="~assets/logo.svg" class="logo" />
-    </div>
-    <div class="row flex-center">
-      <video autoplay playsinline muted loop style="width: 100%">
-        <source type="video/webm" src="~/assets/demo.webm" />
+    <q-btn
+      v-if="playing != true"
+      class="absolute-center z-max"
+      label="start demo"
+      @click="startVideo()"
+    />
+    <div class="absolute-center" style="width: 100%">
+      <video
+        muted
+        playsinline
+        webkit-playsinline
+        loop
+        crossOrigin="anonymous"
+        src="~/assets/demo.mp4"
+        type="video/mp4"
+        style="width: 100%"
+        ref="videoBackground"
+      >
         <source type="video/mp4" src="~/assets/demo.mp4" />
       </video>
     </div>
-    <div class="row flex-center q-mt-lg">
+    <q-page-sticky position="bottom" :offset="[0, 25]">
       <q-btn
         label="Schedule an appointment"
         icon="event"
@@ -18,14 +30,14 @@
         class="shadow-8"
         @click="dialogDay = true"
       ></q-btn>
-    </div>
+    </q-page-sticky>
     <q-dialog
       v-model="dialogDay"
       transition-show="flip-up"
       transition-hide="jump-left"
     >
       <q-date
-        v-model="form.date"
+        v-model="formData.date"
         landscape
         :options="dateOptions"
         :navigation-min-year-month="minMonth"
@@ -45,7 +57,7 @@
           <q-item
             v-for="(time, index) in allowedTimes"
             :key="index"
-            :active="form.time == time"
+            :active="formData.time == time"
             active-class="bg-secondary text-dark text-bold"
             dense
             clickable
@@ -78,25 +90,25 @@
           @submit="updateInfo"
         >
           <q-input
-            v-model="form.name"
+            v-model="formData.name"
             placeholder="Your Name"
             :rules="[(val) => !!val || 'Please let us know who you are']"
           />
           <q-input
-            v-model="form.business"
+            v-model="formData.business"
             placeholder="Your Business"
             :rules="[
               (val) => !!val || 'Please let us know what business you are with',
             ]"
           />
           <q-input
-            v-model="form.email"
+            v-model="formData.email"
             placeholder="Email Address"
             type="email"
             :rules="[(val) => !!val || 'Please provide an email address']"
           />
           <q-input
-            v-model="form.phone"
+            v-model="formData.phone"
             placeholder="Phone Number"
             type="tel"
             mask="(###) ### - ####"
@@ -123,8 +135,8 @@
         <q-card-section>
           <q-item>
             <q-item-section>
-              <q-item-label>{{ form.name }}</q-item-label>
-              <q-item-label caption>{{ form.business }}</q-item-label>
+              <q-item-label>{{ formData.name }}</q-item-label>
+              <q-item-label caption>{{ formData.business }}</q-item-label>
             </q-item-section>
           </q-item>
         </q-card-section>
@@ -132,14 +144,14 @@
         <q-card-section>
           <q-item>
             <q-item-section>
-              <q-item-label caption>{{ form.email }}</q-item-label>
-              <q-item-label caption>{{ form.phone }}</q-item-label>
+              <q-item-label caption>{{ formData.email }}</q-item-label>
+              <q-item-label caption>{{ formData.phone }}</q-item-label>
             </q-item-section>
           </q-item>
         </q-card-section>
         <q-card-section
           ><q-toggle
-            v-model="form.reminder"
+            v-model="formData.reminder"
             checked-icon="mail"
             unchecked-icon="clear"
             color="green"
@@ -176,10 +188,24 @@
 import { defineComponent, ref, computed, watch } from "vue";
 import { date } from "quasar";
 import { db } from "boot/firestore";
+import firebase from "firebase/app";
 
 export default defineComponent({
   name: "PageIndex",
   setup() {
+    const videoBackground = ref(null);
+    const playing = ref(false);
+    function startVideo() {
+      if (videoBackground.value !== null) {
+        videoBackground.value.play();
+        playing.value = true;
+      }
+    }
+    // onMounted(() => {
+    //   if (videoBackground.value !== null) {
+    //     videoBackground.value.play();
+    //   }
+    // });
     const dialogDay = ref(false);
     const dialogTime = ref(false);
     const dialogInfo = ref(false);
@@ -187,7 +213,7 @@ export default defineComponent({
     const dialogSuccess = ref(false);
     const today = date.formatDate(Date.now(), "YYYY/MM/DD");
 
-    const form = ref({
+    const formData = ref({
       name: "",
       business: "",
       email: "",
@@ -197,7 +223,7 @@ export default defineComponent({
       time: null,
     });
     function resetForm() {
-      form.value = {
+      formData.value = {
         name: "",
         business: "",
         email: "",
@@ -214,8 +240,8 @@ export default defineComponent({
     }
 
     const prettyDate = computed(() => {
-      if (form.value.date) {
-        return date.formatDate(form.value.date, "MMMM Do, YYYY");
+      if (formData.value.date) {
+        return date.formatDate(formData.value.date, "MMMM Do, YYYY");
       } else {
         return null;
       }
@@ -235,7 +261,7 @@ export default defineComponent({
       if (reason === "add-day") {
         dialogDay.value = false;
         dialogTime.value = true;
-        form.value.date = value;
+        formData.value.date = value;
       }
     }
 
@@ -258,7 +284,7 @@ export default defineComponent({
       "4:30 PM EST",
     ];
     function updateTime(value) {
-      form.value.time = value;
+      formData.value.time = value;
       dialogTime.value = false;
       dialogInfo.value = true;
     }
@@ -269,13 +295,12 @@ export default defineComponent({
     }
 
     async function createAppointment() {
-      // TODO: add timestamp of when now is...
-      // First try firebase, if not... push to session storage.
       db.collection("appointments")
         .doc()
         .set({
-          ...form.value,
-          datetime: `${form.value.date}/${form.value.time}`,
+          ...formData.value,
+          datetime: `${formData.value.date}/${formData.value.time}`,
+          created_at: firebase.firestore.FieldValue.serverTimestamp(),
         })
         .then(() => {
           console.log(`appointment set... let's move on`);
@@ -286,6 +311,7 @@ export default defineComponent({
 
       dialogConfirm.value = false;
       dialogSuccess.value = true;
+      clearTimeout(clearForm);
       setTimeout(() => {
         resetForm();
       }, 3000);
@@ -293,24 +319,30 @@ export default defineComponent({
 
     let clearForm;
     watch(
-      form,
+      formData,
       () => {
         clearTimeout(clearForm);
-        clearForm = setTimeout(() => {
-          resetForm();
-        }, 30000);
+        if (formData.value.time !== null) {
+          clearForm = setTimeout(() => {
+            console.log("Timeout Triggered");
+            resetForm();
+          }, 30000);
+        }
       },
       { deep: true }
     );
 
     return {
+      videoBackground,
+      startVideo,
+      playing,
       dialogDay,
       dialogTime,
       dialogInfo,
       dialogConfirm,
       dialogSuccess,
       minMonth,
-      form,
+      formData,
       prettyDate,
       dateOptions,
       updateDate,

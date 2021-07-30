@@ -95,7 +95,7 @@ module.exports = configure(function (ctx) {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['LocalStorage', 'AppFullscreen']
+      plugins: ['LocalStorage', 'AppFullscreen', 'Notify']
     },
 
     // animations: 'all', // --- includes all animations
@@ -128,18 +128,28 @@ module.exports = configure(function (ctx) {
 
     // https://v2.quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
-      workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
+      workboxPluginMode: 'InjectManifest', // 'GenerateSW' or 'InjectManifest'
+      // workboxOptions: {
+      //   skipWaiting: false,
+      //   clientsClaim: true,
+      //   maximumFileSizeToCacheInBytes: 9000000,
+      // }, // only for GenerateSW
       workboxOptions: {
-        skipWaiting: true,
-        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 9000000,
-      }, // only for GenerateSW
-
+      },
+      // extendWebpackCustomSW (cfg) {
+      //   // directly change props of cfg;
+      //   // no need to return anything
+      //   cfg.maximumFileSizeToCacheInBytes = 9000000;
+      // },
       // for the custom service worker ONLY (/src-pwa/custom-service-worker.[js|ts])
       // if using workbox in InjectManifest mode
       chainWebpackCustomSW (chain) {
         chain.plugin('eslint-webpack-plugin')
           .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+        // chain.plugin('InjectManifest').config({
+        //   maximumFileSizeToCacheInBytes: 9000000
+        // })
       },
 
       manifest: {
