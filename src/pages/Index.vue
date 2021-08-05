@@ -2,8 +2,12 @@
   <q-page class="bg-dark">
     <q-btn
       v-if="playing != true"
-      class="absolute-center z-max"
-      label="start demo"
+      rounded
+      glossy
+      color="dark"
+      class="absolute-center z-top q-shadow-12"
+      icon="play_circle_filled"
+      size="xl"
       @click="startVideo()"
     />
     <div class="absolute-center" style="width: 100%">
@@ -32,6 +36,7 @@
       ></q-btn>
     </q-page-sticky>
     <q-dialog
+      class="z-max"
       v-model="dialogDay"
       transition-show="flip-up"
       transition-hide="jump-left"
@@ -45,6 +50,7 @@
       />
     </q-dialog>
     <q-dialog
+      class="z-max"
       v-model="dialogTime"
       transition-show="jump-left"
       transition-hide="jump-left"
@@ -74,6 +80,7 @@
       </q-card>
     </q-dialog>
     <q-dialog
+      class="z-max"
       v-model="dialogInfo"
       transition-show="jump-left"
       transition-hide="jump-left"
@@ -121,6 +128,7 @@
       </q-card>
     </q-dialog>
     <q-dialog
+      class="z-max"
       v-model="dialogConfirm"
       transition-show="jump-left"
       transition-hide="flip-down"
@@ -169,6 +177,7 @@
       </q-card>
     </q-dialog>
     <q-dialog
+      class="z-max"
       v-model="dialogSuccess"
       transition-show="flip-down"
       transition-hide="scale"
@@ -187,7 +196,7 @@
 <script>
 import { defineComponent, ref, computed, watch } from "vue";
 import { date } from "quasar";
-import { db } from "boot/firestore";
+import { db } from "src/boot/firebase";
 import firebase from "firebase/app";
 
 export default defineComponent({

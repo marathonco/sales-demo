@@ -12,7 +12,8 @@
     "deploy": "quasar build --mode pwa && firebase deploy --only hosting",
     "deploy:all": "quasar build --mode pwa && firebase deploy",
     "lint": "eslint --ext .js,.vue ./",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "emulator": "firebase emulators:start --import=./emulator --export-on-exit"
   },
   "dependencies": {
     "@quasar/extras": "^1.10.8",

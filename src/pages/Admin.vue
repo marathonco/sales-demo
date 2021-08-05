@@ -38,9 +38,15 @@
           <q-item-section>
             <q-item-label>{{ user.email }}</q-item-label>
           </q-item-section>
-
           <q-item-section side>
-            <q-btn flat icon="delete" @click="deleteUser()" />
+            <q-btn
+              icon="reload"
+              label="reset password"
+              @click="resetPassword(user.email)"
+            />
+          </q-item-section>
+          <q-item-section side>
+            <q-btn flat icon="delete" @click="deleteUser(user.uid)" />
           </q-item-section>
         </q-item>
         <q-item>
@@ -62,9 +68,10 @@
 </template>
 
 <script>
+// TODO: add forgot password and/or send password reset button
 import { date } from "quasar";
 import { defineComponent, ref, computed, onBeforeMount } from "vue";
-import { db } from "boot/firestore";
+import { auth, db } from "src/boot/firebase";
 
 async function getAppointments() {
   const appts = [];
@@ -80,11 +87,13 @@ async function getAppointments() {
 }
 
 async function getUsers() {
+  console.log("fetching users");
   const allUsers = [];
   await db
     .collection("users")
     .get()
     .then((querySnapshot) => {
+      console.log("got users", querySnapshot);
       querySnapshot.docs.forEach((doc) => {
         allUsers.push({ ...doc.data(), id: doc.id });
       });
@@ -197,54 +206,40 @@ export default defineComponent({
         });
     };
     const newUserEmail = ref(null);
-    const newUserPassword = ref(null);
-    function addUser(email, password) {
-      // store new user in db/newUsers/user.uid
-      // TODO: use cloud functions for this:
-      // EXAMPLE CLOUD FUNCTION
-      // export const createUser = functions.firestore
-      // .document('newUsers/{userId}')
-      // .onCreate(async (snap, context) => {
-      //     const userId = context.params.userId;
-      //     const newUser = await admin.auth().createUser({
-      //         disabled: false,
-      //         displayName: snap.get('displayName'),
-      //         email: snap.get('email'),
-      //         password: snap.get('password'),
-      //         phoneNumber: snap.get('phoneNumber')
-      //     });
-      //     // You can also store the new user in another collection with extra fields
-      //     await admin.firestore().collection('users').doc(newUser.uid).set({
-      //         uid: newUser.uid,
-      //         email: newUser.email,
-      //         name: newUser.displayName,
-      //         phoneNumber: newUser.phoneNumber,
-      //         otherfield: snap.get('otherfield'),
-      //         anotherfield: snap.get('anotherfield')
-      //     });
-      //     // Delete the temp document
-      //     return admin.firestore().collection('newUsers').doc(userId).delete();
-      // });
-      firebase
-        .auth()
-        .createUserWithEmailAndPassword(email, password)
+
+    function addUser(email) {
+      auth
+        .createUserWithEmailAndPassword(
+          email,
+          Math.random().toString(36).substr(2, 8)
+        )
         .then((userCredential) => {
-          // Signed in
-          const user = userCredential.user;
-          db.collection("users")
-            .doc(user.id)
-            .set({ ...user })
-            .then(() => {
-              console.log(`user created let's move on`);
-            })
-            .catch((error) => {
-              console.log(`oops, there was an error...: ${error}`);
-            });
+          console.log("user created", userCredential.user);
+          resetPassword(email);
+          users.value.push(userCredential.user);
+          newUserEmail.value = null;
+        })
+        .catch((error) => {
+          console.log("error with adding new user", error);
         });
     }
-    function deleteUser(user) {
-      console.log(user);
-      // TODO: will have to use cloud functions for this.
+    function resetPassword(email) {
+      const actionCodeSettings = {
+        url: `${location.origin}/register/?email=${email}`,
+        handleCodeInApp: true,
+      };
+      auth
+        .sendPasswordResetEmail(email, actionCodeSettings)
+        .then(() => {
+          console.log("sending email link now...");
+        })
+        .catch((error) => {
+          console.log("error sending email", error);
+        });
+    }
+
+    function deleteUser(uid) {
+      db.collection("users").doc(uid).delete();
     }
 
     return {
@@ -255,6 +250,9 @@ export default defineComponent({
       deleteAppointment,
       users,
       newUserEmail,
+      addUser,
+      resetPassword,
+      deleteUser,
     };
   },
 });

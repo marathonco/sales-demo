@@ -9,10 +9,19 @@ const routes = [
   },
   {
     path: '/admin',
+    meta: {
+      requiresAuth: true
+    },
     component: () => import('layouts/AdminLayout.vue'),
     children: [
       { path: '', component: () => import('pages/Admin.vue') },
-      { path: 'settings', component: () => import('pages/Settings.vue')},
+    ]
+  },
+  {
+    path: '/login',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/Login.vue') },
     ]
   },
 
