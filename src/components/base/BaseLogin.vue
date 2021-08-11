@@ -132,11 +132,23 @@
 // TODO: setup catchall error display
 import { defineComponent, ref, onBeforeMount } from "vue";
 import { auth } from "src/boot/firebase";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 export default defineComponent({
-  setup(props, { emit }) {
+  setup(props) {
     const router = useRouter();
+    const route = useRoute();
+    if (route.query.oobCode && route.query.reset) {
+      firebase
+        .auth()
+        .verifyPasswordResetCode(route.query.oobCode)
+        .then(() => {
+          email.value = route.query.reset;
+        })
+        .catch((err) => {
+          console.log("invalid reset code");
+        });
+    }
     const email = ref(null);
     const password = ref(null);
     const isPwd = ref(true);
@@ -150,7 +162,6 @@ export default defineComponent({
       await new Promise((resolve, reject) => {
         auth.onAuthStateChanged((authUser, claims) => {
           resolve(authUser);
-          emit("update:isAuthenticated", authUser ? true : false);
         });
       });
     });
@@ -172,7 +183,6 @@ export default defineComponent({
               router.push("/admin");
             }
             return Promise.resolve(userCredential.user);
-            // return userCredential.;
           })
           .catch((err) => {
             if (

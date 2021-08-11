@@ -19,19 +19,18 @@ register(process.env.SERVICE_WORKER_FILE, {
 
   registered (/* registration */) {
     console.log('Service worker has been registered.')
-
   },
 
   cached (/* registration */) {
     console.log('Content has been cached for offline use.')
-
   },
 
   updatefound (/* registration */) {
     console.log('New content is downloading.')
   },
 
-  updated (/* registration */) {
+  updated (registration) {
+    console.log('dispatching event from the service worker')
     Notify.create({
       timeout: 0,
       message: 'New Content is available',
@@ -42,7 +41,7 @@ register(process.env.SERVICE_WORKER_FILE, {
         { label: 'Dismiss', color: 'white', handler: () => { } }
       ]
     })
-    console.log('New content is available; please refresh.')
+    // console.log('New content is available; please refresh.')
   },
 
   offline () {

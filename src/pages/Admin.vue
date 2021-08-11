@@ -1,13 +1,6 @@
 <template>
   <q-page padding>
     <div v-if="appointments">
-      <q-toggle
-        v-model="pastAppointments"
-        checked-icon="check"
-        unchecked-icon="clear"
-        color="green"
-        label="show past appointments?"
-      />
       <q-table
         title="Booked Appointments"
         :rows="appointments"
@@ -15,6 +8,19 @@
         row-key="name + time"
         :pagination="initialPagination"
       >
+        <template v-slot:top>
+          <div class="col-2 q-table__title">Booked Appointments</div>
+
+          <q-space />
+
+          <q-toggle
+            v-model="pastAppointments"
+            checked-icon="check"
+            unchecked-icon="clear"
+            color="green"
+            label="show past appointments?"
+          />
+        </template>
         <template v-slot:body-cell-delete="props">
           <q-td :props="props">
             <q-btn flat icon="delete" @click="deleteAppointment(props.row)" />
@@ -23,7 +29,7 @@
       </q-table>
     </div>
     <div class="row" v-else>
-      <h4 class="text-center">No appointments in data</h4>
+      <h6 class="text-center">No appointments in data</h6>
     </div>
     <q-card>
       <h5 class="text-left q-pa-md">Users:</h5>
@@ -40,7 +46,7 @@
           </q-item-section>
           <q-item-section side>
             <q-btn
-              icon="reload"
+              icon="autorenew"
               label="reset password"
               @click="resetPassword(user.email)"
             />
@@ -69,7 +75,7 @@
 
 <script>
 // TODO: add forgot password and/or send password reset button
-import { date } from "quasar";
+import { date, useQuasar } from "quasar";
 import { defineComponent, ref, computed, onBeforeMount } from "vue";
 import { auth, db } from "src/boot/firebase";
 
@@ -102,8 +108,10 @@ async function getUsers() {
 }
 
 export default defineComponent({
+  // TODO: pull data from localStore too?
   name: "Admin",
   setup() {
+    const $q = useQuasar();
     let data = ref([]);
     let users = ref([]);
     onBeforeMount(async () => {
@@ -218,6 +226,12 @@ export default defineComponent({
           resetPassword(email);
           users.value.push(userCredential.user);
           newUserEmail.value = null;
+          // show notification
+          $q.notify({
+            message: "New user created",
+            caption: "The will receive an email to set their password.",
+            icon: "account_circle",
+          });
         })
         .catch((error) => {
           console.log("error with adding new user", error);

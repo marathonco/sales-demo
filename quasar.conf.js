@@ -130,27 +130,10 @@ module.exports = configure(function (ctx) {
     pwa: {
       workboxPluginMode: 'InjectManifest', // 'GenerateSW' or 'InjectManifest'
       // workboxOptions: {
-      //   skipWaiting: false,
+      //   skipWaiting: true,
       //   clientsClaim: true,
       //   maximumFileSizeToCacheInBytes: 9000000,
       // }, // only for GenerateSW
-      workboxOptions: {
-        maximumFileSizeToCacheInBytes: 9000000,
-      },
-      // extendWebpackCustomSW (cfg) {
-      //   // directly change props of cfg;
-      //   // no need to return anything
-      //   cfg.maximumFileSizeToCacheInBytes = 9000000;
-      // },
-      // for the custom service worker ONLY (/src-pwa/custom-service-worker.[js|ts])
-      // if using workbox in InjectManifest mode
-      chainWebpackCustomSW (chain) {
-        chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
-        // chain.plugin('InjectManifest').config({
-        //   maximumFileSizeToCacheInBytes: 9000000
-        // })
-      },
 
       manifest: {
         name: `Marathon Sales App`,
@@ -191,13 +174,16 @@ module.exports = configure(function (ctx) {
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
-    cordova: {
-      // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
-    },
+    // cordova: {
+    //   // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
+    // },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
     capacitor: {
-      hideSplashscreen: true
+      hideSplashscreen: true,
+      appName: 'Marathon Sales App',
+      version: '1.01',
+      description: 'Appointment booking app for Marathon Co.'
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-electron-apps/configuring-electron

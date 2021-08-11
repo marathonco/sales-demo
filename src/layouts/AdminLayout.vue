@@ -1,7 +1,9 @@
 <template>
   <q-layout view="hhh lpR fFf">
     <q-page-container>
-      <base-logout />
+      <div class="row flex-center q-ma-md">
+        <base-logout />
+      </div>
       <router-view />
     </q-page-container>
   </q-layout>

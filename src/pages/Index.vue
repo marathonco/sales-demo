@@ -1,28 +1,18 @@
 <template>
   <q-page class="bg-dark">
-    <q-btn
-      v-if="playing != true"
-      rounded
-      glossy
-      color="dark"
-      class="absolute-center z-top q-shadow-12"
-      icon="play_circle_filled"
-      size="xl"
-      @click="startVideo()"
-    />
     <div class="absolute-center" style="width: 100%">
       <video
+        autoplay="false"
         muted
         playsinline
-        webkit-playsinline
         loop
-        crossOrigin="anonymous"
-        src="~/assets/demo.mp4"
         type="video/mp4"
         style="width: 100%"
+        src="/web-video.mp4"
         ref="videoBackground"
+        @click="videoBackground.play()"
       >
-        <source type="video/mp4" src="~/assets/demo.mp4" />
+        <source type="video/mp4" src="/web-video.mp4" />
       </video>
     </div>
     <q-page-sticky position="bottom" :offset="[0, 25]">
@@ -99,6 +89,7 @@
           <q-input
             v-model="formData.name"
             placeholder="Your Name"
+            autofocus
             :rules="[(val) => !!val || 'Please let us know who you are']"
           />
           <q-input
@@ -194,27 +185,135 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from "vue";
-import { date } from "quasar";
+// TODO: add data to local storage...
+import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { date, useQuasar } from "quasar";
 import { db } from "src/boot/firebase";
 import firebase from "firebase/app";
 
 export default defineComponent({
   name: "PageIndex",
   setup() {
+    const $q = useQuasar();
     const videoBackground = ref(null);
-    const playing = ref(false);
-    function startVideo() {
-      if (videoBackground.value !== null) {
-        videoBackground.value.play();
-        playing.value = true;
-      }
-    }
-    // onMounted(() => {
-    //   if (videoBackground.value !== null) {
-    //     videoBackground.value.play();
-    //   }
+    // onMounted(async () => {
+    //   videoAsBlob("/web-video.mp4");
     // });
+
+    // TODO: the problem is that the blob saved isn't the entire video...
+    // async function videoAsBlob(videoSrcUrl) {
+    //   await fetch(videoSrcUrl).then((response) => {
+    //     console.log(response);
+    //     videoBackground.value.src = videoSrcUrl;
+    //     videoBackground.value.play();
+    //     return response.blob();
+    //   });
+    // .then((blob) => {
+    //   console.log("video loaded as a blob");
+    //   const videoBlob = URL.createObjectURL(blob);
+    //   videoBackground.value.src = videoBlob;
+    //   videoBackground.value.play();
+    // });
+
+    ////////////////////// Local Storage version ////////////////////////////
+    // let videoBlob = null;
+    // // check localStorage for video
+    // const storedBlob = await $q.localStorage.getItem("videoBlobs");
+    // if (storedBlob !== null) {
+    //   console.log("pulling video src from storage", storedBlob);
+    //   // videoBlob = storedBlob; // doesn't work
+    //   videoBlob = createObjectURL(storedBlob);
+    //   // const buf = await new Response(storedBlob).arrayBuffer();
+    //   // videoBlob = URL.createObjectURL(new Blob([buf], { type: "video/mp4" })); // doesn't work.
+    // } else {
+    //   await fetch(videoSrcUrl)
+    //     .then((response) => {
+    //       return response.blob();
+    //     })
+    //     .then((blob) => {
+    //       console.log("storing video");
+    //       videoBlob = URL.createObjectURL(blob);
+    //       // store blob in localStorage...
+    //       $q.localStorage.set("videoBlobs", videoBlob);
+    //     });
+    // }
+
+    // .then(response => {
+    //   //make sure this file is cached ffs.
+
+    // })
+    // console.log(videoBlob);
+    // videoBackground.value.src = videoBlob;
+    // videoBackground.value.play();
+    // return videoBlob;
+
+    ////////////////////// IndexedDB version /////////////////////////////////
+    // let videoBlob = null;
+    // let db;
+    // const dbVersion = 1;
+    // const request = window.indexedDB.open("dbStorage", dbVersion);
+
+    // request.onerror = function (e) {
+    //   console.error("Unable to open database.");
+    // };
+
+    // request.onsuccess = function (e) {
+    //   console.log("db has been found");
+    //   db = e.target.result;
+    //   console.log("db opened");
+    //   const videoStore = db
+    //     .transaction("videoBackground", "readwrite")
+    //     .objectStore("videoBackground");
+    //   const storeRequest = videoStore.get(videoSrcUrl);
+    //   storeRequest.onerror = function (e) {
+    //     console.log("error", e);
+    //   };
+    //   storeRequest.onsuccess = async function (e) {
+    //     console.log("video store found");
+    //     videoBlob = request.result.blob;
+
+    //     console.log("video:", videoBlob);
+    //     if (!videoBlob) {
+    //       await fetch(videoSrcUrl)
+    //         .then((response) => {
+    //           console.log(response);
+    //           return response.blob();
+    //         })
+    //         .then((blob) => {
+    //           console.log("storing video");
+    //           videoBlob = URL.createObjectURL(blob);
+    //           console.log("new blob", videoBlob);
+    //           // store blob in indexedDb...
+    //           const videoStore = db
+    //             .transaction("videoBackground", "readwrite")
+    //             .objectStore("videoBackground");
+    //           videoStore.add({ blob: videoBlob, id: videoSrcUrl });
+    //         });
+    //     }
+    //   };
+    // };
+
+    // request.onupgradeneeded = async function (e) {
+    //   console.log("creating db for first time");
+    //   let db = e.target.result;
+    //   db.createObjectStore("videoBackground", { keyPath: "id" });
+
+    //   await fetch(videoSrcUrl)
+    //     .then((response) => {
+    //       return response.blob();
+    //     })
+    //     .then((blob) => {
+    //       console.log("storing video");
+    //       videoBlob = URL.createObjectURL(blob);
+    //       // store blob in indexedDb...
+    //       const videoStore = db
+    //         .transaction("videoBackground", "readwrite")
+    //         .objectStore("videoBackground");
+    //       videoStore.add({ blob: videoBlob, id: videoSrcUrl });
+    //     });
+    // };
+    // }
+
     const dialogDay = ref(false);
     const dialogTime = ref(false);
     const dialogInfo = ref(false);
@@ -343,8 +442,7 @@ export default defineComponent({
 
     return {
       videoBackground,
-      startVideo,
-      playing,
+      videoAsBlob,
       dialogDay,
       dialogTime,
       dialogInfo,
